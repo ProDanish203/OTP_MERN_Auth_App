@@ -18,6 +18,9 @@ module.exports = {
         xsm: "550px",
         xs: "450px",
       },
+      backgroundImage:{
+        "hero-pattern": "linear-gradient(to right bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url('/src/Assets/Images/bg.jpg')",
+      }
     },
   },
   plugins: [],
