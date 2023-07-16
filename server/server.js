@@ -4,6 +4,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import connect from "./Config/db.js";
 import authRoute from "./Routes/AuthRoute.js";
+import errorMiddleware from "./middlwares/errorMiddleware.js";
 dotenv.config();
 
 const app = express();
@@ -16,6 +17,10 @@ app.disable('x-powered-by')
 
 // Routes
 app.use("/api/v1/auth", authRoute)
+
+
+// Error Middleware
+app.use(errorMiddleware)
 
 
 const port = process.env.PORT
