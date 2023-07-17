@@ -1,6 +1,7 @@
 import UserModel from "../models/UserModel.js";
 import bcrypt from "bcrypt";
 import JWT from "jsonwebtoken";
+import otpGenerator from "otp-generator";
 
 export const register = async (req, res, next) => {
     try{
@@ -10,7 +11,7 @@ export const register = async (req, res, next) => {
         if(!username) return next("Username is required!");
         if(!email) return next("Email is required!");
         if(!password) return next("Password is required!");
-        if(!password.length < 6) return next("Password must be greater than 6 characters!");
+        if(password.length < 6) return next("Password must be greater than 6 characters!");
 
         // Checking existing username
         const usernameExist  = await UserModel.findOne({ username });
@@ -56,6 +57,24 @@ export const register = async (req, res, next) => {
     }
     catch(error){
         next("Unable to create account")
+    }
+}
+
+
+export const verifyUser = async (req, res, next) => {
+    try{
+        const { username } = req.body;
+        if(!username) return next("Username is required");
+
+        const user = await UserModel.findOne({ username });
+        if(!user) return next("Username Not found");
+        return res.status(200).send({
+            success: true,
+            user
+        })
+
+    }catch(error){
+        next(error)
     }
 }
 
@@ -153,6 +172,87 @@ export const updateUser = async (req, res, next) => {
     }
 }
 
+export const generateOTP = async (req, res, next) => {
+    req.app.locals.OTP = await otpGenerator.generate(6, {
+        lowerCaseAlphabets: false,
+        upperCaseAlphabets: false,
+        specialChars: false
+    })
+
+    res.status(201).send({
+        success: true, 
+        code: req.app.locals.OTP
+    })
+
+}
+
+export const verifyOTP = async (req, res) => {
+    const { code } = req.query;
+
+    if(parseInt(req.app.locals.OTP) === parseInt(code)){
+        req.app.locals.OTP = null;
+        req.app.locals.resetSession = true;
+
+        return res.status(201).send({
+            success: true, 
+            message: "OTP verified"
+        })
+    }
+
+    return res.status(400).send({
+        success: false,
+        message: "Invalid OTP"
+    })
+}
+
+export const createResetSession = async (req, res) => {
+
+    if(req.app.locals.resetSession){
+        req.app.locals.resetSession = false
+        return res.status(200).send({
+            success: true,
+            message: "Access granted"
+        })
+    }
+
+    return res.status(400).send({
+        success: false,
+        mesasge: "Session expired"
+    })
+
+}
+
+export const resetPassword = async (req, res, next) => {
+    try{
+        if(!req.app.locals.resetSession) return next("Session expired")
+        const {username, password} = req.body;
+
+        if(!username) return next("Username is required")
+        if(!password) return next("Password is required")
+
+        try{
+            const user = await UserModel.findOne({ username })
+            if(!user) return next("User not found");
+
+            const updatedPass = await bcrypt.hash(password, 10)
+            if(!updatedPass) return next("Unable to hash password");
+
+            const updated = await UserModel.findByIdAndUpdate(user._id, {password: updatedPass})
+            if(!updated){return next("Error while updating the password")} 
+            
+            res.status(200).send({
+                success: true,
+                message: "Password Updated Successfully"
+            })
+
+        }catch(error){
+            return next("Error: " + error)
+        }
+        
+    }catch(err) {
+        next(err)
+    }
+}
 
 export const resetMail = async (req, res) => {
     res.send("Hello")
@@ -162,19 +262,3 @@ export const authenticate = async (req, res) => {
     res.send("Hello")
 }
 
-export const generateOTP = async (req, res) => {
-    res.send("Hello")
-}
-
-export const verifyOTP = async (req, res) => {
-    res.send("Hello")
-}
-
-export const createResetSession = async (req, res) => {
-    res.send("Hello")
-}
-
-
-export const resetPassword = async (req, res) => {
-    res.send("Hello")
-}
