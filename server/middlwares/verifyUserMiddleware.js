@@ -1,4 +1,4 @@
-import UserModel from "../models/UserModel";
+import UserModel from "../models/UserModel.js";
 
 export const verifyUser = async (req, res, next) => {
     try{
@@ -6,7 +6,13 @@ export const verifyUser = async (req, res, next) => {
 
         // Check if the user exists
         const user = await UserModel.findOne({ username });
-        // if()
+        if(!user) return res.status(404).send({
+            success: false,
+            message: "User not found",
+            error: "User not found"
+        })
+
+        next();
     }
     catch(err){
         res.status(500).send({
