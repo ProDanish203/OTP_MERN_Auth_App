@@ -14,8 +14,8 @@ export const registerMail = async (req, res, next) => {
     const mailOptions = {
         from: process.env.EMAIL,
         to: userEmail,
-        subject: "Registeration successfull",
-        text: "We're very pleased to have you with us as a new user of our website. Thanks for creating the account."
+        subject: subject || "Registeration successfull",
+        text: text || "We're very pleased to have you with us as a new user of our website. Thanks for creating the account." 
     }
     
     transporter.sendMail(mailOptions, function(error, info){

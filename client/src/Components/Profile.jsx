@@ -1,14 +1,22 @@
-import React, { useState } from 'react'
-import user from "../Assets/Images/user.jpg";
+import React, { useEffect, useState } from 'react'
+import user1 from "../Assets/Images/user.jpg";
 import { Link } from "react-router-dom";
 import { useFormik } from "formik";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { validateProfile } from "../Helper/Validate";
 import { convertImage } from "../Helper/Convert";
+import { useSelector } from "react-redux";
 
 export const Profile = () => {
 
   const [file, setFile] = useState()
+  const { user } = useSelector(state => state.auth)
+
+  let profileData;
+  if(user != null){
+    profileData = user;
+  }
+
 
   const formik = useFormik({
     initialValues: {
@@ -40,17 +48,15 @@ export const Profile = () => {
     <>
     <div className='bg-hero-pattern bg-center bg-cover min-h-[100vh] w-full main-bg flex items-center justify-center px-3'>
 
-    <Toaster position='top-center' reverseOrder={false}></Toaster>
-
     <div className='bg-white rounded-md p-4 shadow-2xl max-w-[450px] w-full flex flex-col justify-center'>
 
-      <h2 className='text-2xl font-bold text-center'>Profile</h2>
+      <h2 className='text-2xl font-bold text-center'>{profileData?.username || "Profile"}</h2>
       <p className='text-center max-w-[80%] mx-auto mt-1 text-gray-500 mb-2'>You can now update your profile</p>
       <form onSubmit={formik.handleSubmit} className='sm:w-[90%] w-full mx-auto'>
 
         <div className='flex items-center justify-center mx-auto w-24 h-24 shadow-xl rounded-full gap-2 my-2'>
           <label htmlFor="profile">
-            <img src={file || user} alt="user" className='w-24 h-24 select-none rounded-full object-cover'/>
+            <img src={file || user1} alt="user" className='w-24 h-24 select-none rounded-full object-cover'/>
           </label>
           <input type="file" id='profile' className='hidden' onChange={uploadFile} />
         </div>
