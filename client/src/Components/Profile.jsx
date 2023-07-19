@@ -1,47 +1,78 @@
 import React, { useEffect, useState } from 'react'
 import user1 from "../Assets/Images/user.jpg";
-import { Link } from "react-router-dom";
-import { useFormik } from "formik";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { validateProfile } from "../Helper/Validate";
 import { convertImage } from "../Helper/Convert";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser } from "../Store/Reducers/AuthReducer";
+import { Loader } from "./Loader";
+import axios from "axios";
 
 export const Profile = () => {
 
-  const [file, setFile] = useState()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const { user } = useSelector(state => state.auth)
 
-  let profileData;
-  if(user != null){
-    profileData = user;
-  }
-
-
-  const formik = useFormik({
-    initialValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      mobile: "",
-      address: ""
-    },
-    validate: validateProfile,
-    validateOnBlur: false,
-    validateOnChange: false,
-    onSubmit: async values => {
-      if(!file){
-        return toast.error("Please upload profile Image")
-      }
-      values = await Object.assign(values, { profile: file || ''})
-      console.log(values)
-      
-    }
+  const [file, setFile] = useState()
+  const [updateData, setUpdateData] = useState({
+    email: user?.email || "",
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    mobile: user?.mobile || "",
+    address: user?.address || "" 
   })
+  
+  const handleChange = (e) => {
+    let name = e.target.name;
+    let value = e.target.value;
+
+    setUpdateData({...updateData, [name]: value})
+  }
 
   const uploadFile = async (e) => {
     const base64 = await convertImage(e.target.files[0])
     setFile(base64)
+  }
+
+  const baseUrl = "http://localhost:5000"
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try{
+      setLoading(true);
+      const token = await localStorage.getItem('token') 
+      const {data} = await axios.put(`${baseUrl}/api/v1/auth/updateUser`, {
+        email: updateData.email || user?.email || "",
+        firstName: updateData.firstName || "",
+        lastName: updateData.lastName || "",
+        mobile: updateData.mobile || "",
+        address: updateData.address || ""
+      }, {
+          headers: {
+              "Authorization": `Bearer ${token}`
+          }
+      })
+
+      toast.success("Profile Updated successfully");
+      setLoading(false);
+    }catch(error){
+      console.log(error);
+      toast.error(error.response.data.message);
+      setLoading(false)
+    }
+  }
+
+  const logout = () => {
+    try{
+      localStorage.removeItem('token')
+      dispatch(setUser(null))
+      toast.success("Logged out successfully");
+      navigate("/login");
+    }catch(error){
+      console.log(error)
+    }
   }
 
   return (
@@ -50,9 +81,9 @@ export const Profile = () => {
 
     <div className='bg-white rounded-md p-4 shadow-2xl max-w-[450px] w-full flex flex-col justify-center'>
 
-      <h2 className='text-2xl font-bold text-center'>{profileData?.username || "Profile"}</h2>
+      <h2 className='text-2xl font-bold text-center'>Hello {user?.username || "Profile"}</h2>
       <p className='text-center max-w-[80%] mx-auto mt-1 text-gray-500 mb-2'>You can now update your profile</p>
-      <form onSubmit={formik.handleSubmit} className='sm:w-[90%] w-full mx-auto'>
+      <form onSubmit={handleSubmit} className='sm:w-[90%] w-full mx-auto'>
 
         <div className='flex items-center justify-center mx-auto w-24 h-24 shadow-xl rounded-full gap-2 my-2'>
           <label htmlFor="profile">
@@ -65,16 +96,20 @@ export const Profile = () => {
 
           <div className='flex w-full gap-3 items-center'>
             <input 
-            {...formik.getFieldProps('firstname')}
             type="text" 
             placeholder='First Name' 
+            name='firstName'
+            value={updateData?.firstName}
+            onChange={handleChange}
             autoComplete='off'
             className='shadow-md px-2 py-2 my-2 border-2 text-sm w-full outline-none border-gray-400 rounded-md' />
 
             <input 
-            {...formik.getFieldProps('lastName')}
             type="text" 
             placeholder='Last Name' 
+            name='lastName'
+            value={updateData?.lastName}
+            onChange={handleChange}
             autoComplete='off'
             className='shadow-md px-2 py-2 my-2 border-2 text-sm w-full outline-none border-gray-400 rounded-md' />
 
@@ -82,16 +117,20 @@ export const Profile = () => {
 
           <div className='flex w-full gap-3 items-center'>
             <input 
-            {...formik.getFieldProps('email')}
             type="email" 
             placeholder='Email Address' 
+            name='email'
+            value={updateData?.email}
+            onChange={handleChange}
             autoComplete='off'
             className='shadow-md px-2 py-2 my-2 border-2 text-sm w-full outline-none border-gray-400 rounded-md' />
 
             <input 
-            {...formik.getFieldProps('mobile')}
             type="number" 
             placeholder='Mobile' 
+            name='mobile'
+            value={updateData?.mobile}
+            onChange={handleChange}
             autoComplete='off'
             minLength={7}
             maxLength={11}
@@ -99,22 +138,25 @@ export const Profile = () => {
           </div>
           
           <input 
-          {...formik.getFieldProps('address')}
           type="text" 
           placeholder='Address' 
+          name='address'
+          value={updateData?.address}
+          onChange={handleChange}
           autoComplete='off'
-          className='shadow-md px-2 py-2 my-2 border-2 text-sm w-full outline-none border-gray-400 rounded-md' />
-          
+          className='shadow-md px-2 py-2 my-2 border-2 text-sm w-full outline-none border-gray-400 rounded-md' />          
 
         </div>
 
         <div className='w-full mt-2'>
-          <button type='submit' className='bg-purple-700 w-full py-2.5 my-3 text-xl rounded-md text-white'>Update</button>
+          <button type='submit' className='bg-purple-700 w-full py-2.5 my-3 text-xl rounded-md text-white'>{loading ? <Loader dark={false}/> : "Update"}</button>
         </div>
 
         <div className='flex items-center gap-1 my-2'>
           <p className='text-md'>come back later? </p>
-          <Link to="/login" className='text-purple-600 text-md font-semibold'>Logout</Link>
+          <button
+          onClick={() => {logout()}}
+          className='text-purple-600 text-md font-semibold'>Logout</button>
         </div>
 
       </form>

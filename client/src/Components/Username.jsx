@@ -33,7 +33,7 @@ export const Username = () => {
         password
       })
 
-      dispatch(setUser(data.user))
+      // dispatch(setUser(data.user))
       localStorage.setItem('token', data.token);
       setLoading(false)
       toast.success(data.message)

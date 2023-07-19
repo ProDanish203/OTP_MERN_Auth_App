@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import Mailgen from "mailgen";
 
 export const registerMail = async (req, res, next) => {
     const { username, userEmail, text, subject } = req.body;

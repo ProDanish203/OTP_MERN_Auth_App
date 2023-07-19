@@ -246,3 +246,22 @@ export const resetPassword = async (req, res, next) => {
         next(err)
     }
 }
+
+
+export const getAuthUser = async (req, res, next) => {
+    try{    
+        const id = req.user.userId; 
+
+        const user = await UserModel.findOne({_id: id});
+        user.password = undefined;
+
+        if(!user) return next("Username not found");
+
+        res.status(200).send({
+            success: true,
+            user
+        })
+    }catch(error){
+        next("Auth Failed: " + error)
+    }
+} 
